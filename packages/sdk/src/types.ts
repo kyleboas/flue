@@ -1,7 +1,7 @@
 import type { AgentMessage, ThinkingLevel } from '@mariozechner/pi-agent-core';
 import type { ImageContent, Model, TSchema } from '@mariozechner/pi-ai';
 import type * as v from 'valibot';
-import type { FlueModelDefinition } from './config.ts';
+
 
 export type { ThinkingLevel };
 
@@ -766,10 +766,4 @@ export interface BuildOptions {
 	target?: 'node' | 'cloudflare';
 	/** Overrides `target` when provided. */
 	plugin?: BuildPlugin;
-	/**
-	 * User-defined model providers from `flue.config.ts`. Inlined into the
-	 * generated server entry at build time. Keys are bare provider names
-	 * (no slash); values come from `defineXxxModel(...)` helpers.
-	 */
-	models?: Record<string, FlueModelDefinition>;
 }

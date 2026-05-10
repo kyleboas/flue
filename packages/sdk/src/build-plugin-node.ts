@@ -10,11 +10,6 @@ export class NodePlugin implements BuildPlugin {
 	generateEntryPoint(ctx: BuildContext): string {
 		const { agents, roles, appEntry } = ctx;
 		const rolesJson = JSON.stringify(roles);
-		// Inline the user-defined models map as a JSON literal. Definitions are
-		// JSON-serializable by construction (see `defineOpenAICompletionsModel`),
-		// so this round-trips losslessly. An empty object is the no-models
-		// default.
-		const userModelsJson = JSON.stringify(ctx.options.models ?? {});
 
 		const webhookAgents = agents.filter((a) => a.triggers.webhook);
 
@@ -73,12 +68,6 @@ const skills = {};
 const roles = ${rolesJson};
 const systemPrompt = '';
 
-// User-defined model providers from flue.config.ts. Inlined at build time;
-// the resolver below binds it as the third arg to \`resolveModel\` so the
-// agent runtime stays oblivious to where the map came from.
-const userModels = ${userModelsJson};
-const resolveModelWithUserModels = (model, providers) => resolveModel(model, providers, userModels);
-
 const handlers = {
 ${handlerMapEntries}
 };
@@ -133,7 +122,7 @@ function createContextForRequest(id, payload, req) {
     env: process.env,
     req,
     agentConfig: {
-      systemPrompt, skills, roles, model: undefined, resolveModel: resolveModelWithUserModels,
+      systemPrompt, skills, roles, model: undefined, resolveModel,
     },
     createDefaultEnv,
     createLocalEnv,

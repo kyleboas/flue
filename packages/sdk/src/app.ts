@@ -2,11 +2,17 @@
  * Public surface for user-authored `app.ts` entries.
  *
  * Users who customize their server pipeline (custom Hono routes,
- * middleware, request rewriting, auth, etc.) import everything they
- * need from this subpath:
+ * middleware, request rewriting, auth, custom model providers, etc.)
+ * import everything they need from this subpath:
  *
- *     import { flue, type Fetchable } from '@flue/sdk/app';
+ *     import { flue, registerProvider, type Fetchable } from '@flue/sdk/app';
  *     import { Hono } from 'hono';
+ *
+ *     registerProvider('my-anthropic', {
+ *       api: 'openai-completions',
+ *       baseUrl: 'https://api.anthropic.com/v1',
+ *       apiKey: process.env.ANTHROPIC_API_KEY,
+ *     });
  *
  *     const app = new Hono();
  *     app.use('*', logger());
@@ -26,12 +32,18 @@
  * construction: `@flue/sdk/app` only re-exports runtime values, never
  * touches `build.ts` or `dev.ts`, and stays small in the worker bundle.
  *
- * Phase 3 of the `app.ts` work will add more runtime API here
- * (`registerProvider`, `registerApiProvider`, etc.). Connector authors
- * who wire up custom sandboxes still go through `@flue/sdk/sandbox` —
- * that's a separate audience and a separate surface.
+ * Connector authors who wire up custom sandboxes still go through
+ * `@flue/sdk/sandbox` — that's a separate audience and a separate surface.
  */
 export { flue } from './runtime/flue-app.ts';
+export {
+	registerProvider,
+	registerApiProvider,
+	type ProviderRegistration,
+	type HttpProviderRegistration,
+	type CloudflareAIBindingRegistration,
+	type CloudflareAIBinding,
+} from './runtime/providers.ts';
 
 /**
  * Shape contract for a user-authored `app.ts` default export. Any

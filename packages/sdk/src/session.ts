@@ -38,6 +38,7 @@ import {
 	type ResultToolBundle,
 	ResultUnavailableError,
 } from './result.ts';
+import { getRegisteredApiKey } from './runtime/providers.ts';
 import {
 	assertRoleExists,
 	resolveEffectiveRole as resolveEffectiveRoleName,
@@ -538,7 +539,16 @@ export class Session implements FlueSession {
 	}
 
 	private getProviderApiKey(provider: string): string | undefined {
-		return this.config.providers?.[provider]?.apiKey;
+		// Precedence: explicit `init({ providers: { ... } })` override → the
+		// apiKey on a `registerProvider()` registration → undefined (pi-ai
+		// then falls back to its own env-var lookup, e.g. ANTHROPIC_API_KEY).
+		// The registry fallback lets users declare an apiKey once on the
+		// registration in `app.ts` and have it apply to every agent that
+		// uses the registered provider, without having to repeat the
+		// `providers: { ... }` block at every init() site.
+		const explicit = this.config.providers?.[provider]?.apiKey;
+		if (explicit !== undefined) return explicit;
+		return getRegisteredApiKey(provider);
 	}
 
 	/**

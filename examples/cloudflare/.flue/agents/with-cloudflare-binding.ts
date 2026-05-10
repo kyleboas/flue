@@ -1,9 +1,9 @@
 // Requires `"ai": { "binding": "AI" }` in wrangler.jsonc. Cloudflare-only:
 // the `cloudflare/` prefix routes through the Workers AI binding (env.AI.run)
-// instead of HTTP. After the resolver refactor, this prefix is no longer
-// hardcoded — the cloudflare build plugin auto-injects a `cloudflare:` entry
-// into the userModels map at build time, and resolution flows through the
-// same pipeline as user-defined providers in flue.config.ts.
+// instead of HTTP. The generated `_entry.ts` calls
+// `registerProvider('cloudflare', { api: 'cloudflare-ai-binding', binding: env.AI })`
+// at module top level, so resolution flows through the same `registerProvider`
+// pipeline a user `app.ts` would use for any custom provider.
 //
 // Multi-test agent: exercises a few capabilities to verify the binding-backed
 // provider behaves like a real model end-to-end.

@@ -7,12 +7,35 @@
  * custom routes, request rewriting, auth, etc. Mount `flue()` to keep
  * Flue's built-in agent route (`POST /agents/:name/:id`) reachable.
  *
+ * `registerProvider(...)` calls at the top level register custom model
+ * providers for the entire build. Agents then reference them via
+ * `init({ model: 'name/model-id' })` without any further setup.
+ *
  * Delete this file and the build falls back to a default app that
  * mounts `flue()` at root with no extras — same behavior the project
  * had before `app.ts` was introduced.
  */
-import { flue } from '@flue/sdk/app';
+import { flue, registerProvider } from '@flue/sdk/app';
 import { Hono } from 'hono';
+
+// Local Ollama (https://ollama.com). Start with `ollama serve`, pull a
+// model with `ollama pull llama3.1:8b`, then run agents with
+// `init({ model: 'ollama/llama3.1:8b' })`.
+//
+// Registration runs at module top level — the platform `process.env` is
+// available here on Node, and on Cloudflare you'd use
+// `import { env } from 'cloudflare:workers'` to capture bindings/secrets.
+registerProvider('ollama', {
+	api: 'openai-completions',
+	baseUrl: 'http://localhost:11434/v1',
+});
+
+// LM Studio (https://lmstudio.ai). Same pattern: start the local server,
+// then `init({ model: 'lmstudio/<loaded-model-id>' })`.
+registerProvider('lmstudio', {
+	api: 'openai-completions',
+	baseUrl: 'http://localhost:1234/v1',
+});
 
 const app = new Hono();
 

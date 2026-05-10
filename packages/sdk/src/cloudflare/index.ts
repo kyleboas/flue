@@ -9,5 +9,10 @@ export { store } from './session-store.ts';
 export { runWithCloudflareContext, getCloudflareContext } from './context.ts';
 export type { CloudflareContext } from './context.ts';
 
-// Caller is responsible for invoking this; do not register on import.
-export { registerCloudflareAIBindingProvider } from './workers-ai-provider.ts';
+// Returns the pi-ai ApiProvider definition for the Cloudflare AI binding.
+// The generated `_entry.ts` calls `registerApiProvider(getCloudflareAIBindingApiProvider())`
+// at module top level. Caller is responsible for the actual registration —
+// keeping the helper a value-returning function (rather than a side-effecting
+// register call) means the registration site is visible at the call site
+// instead of buried in this module.
+export { getCloudflareAIBindingApiProvider } from './workers-ai-provider.ts';

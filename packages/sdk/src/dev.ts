@@ -38,7 +38,6 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { parseEnv } from 'node:util';
 import { build, resolveSourceRoot } from './build.ts';
-import type { FlueModelDefinition } from './config.ts';
 import type { BuildOptions } from './types.ts';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -71,11 +70,6 @@ export interface DevOptions {
 	 * Each path must exist; otherwise dev fails fast with a clear error.
 	 */
 	envFiles?: string[];
-	/**
-	 * User-defined model providers from `flue.config.ts`. Inlined into the
-	 * generated server entry on each rebuild — see {@link BuildOptions.models}.
-	 */
-	models?: Record<string, FlueModelDefinition>;
 }
 
 /** Default port for `flue dev`. F=3, L=5, U=8, E=3 on a phone keypad. */
@@ -137,7 +131,6 @@ export async function dev(options: DevOptions): Promise<void> {
 		root,
 		output,
 		target: options.target,
-		models: options.models,
 	};
 
 	console.error(`[flue] Starting dev server (target: ${options.target})`);
@@ -543,11 +536,12 @@ class NodeReloader implements DevReloader {
 			}
 		});
 
-		const ready = await waitForHealth(this.url, 15_000);
-		if (!ready) {
-			await this.killChild();
-			throw new Error('Node server did not become ready within 15s');
-		}
+		// No readiness probe: Flue intentionally doesn't impose a liveness
+		// endpoint on user apps, and dev is interactive — if the child
+		// crashes immediately, the `child.on('exit')` handler above logs
+		// it; if the port doesn't bind in time, the next request from
+		// outside (curl, agent-browser, etc.) will surface a connection
+		// error directly to the developer.
 	}
 
 	private async killChild(): Promise<void> {
@@ -916,22 +910,7 @@ export function parseEnvFiles(absolutePaths: string[]): Record<string, string> {
 	return merged;
 }
 
-async function waitForHealth(baseUrl: string, timeoutMs: number): Promise<boolean> {
-	const start = Date.now();
-	while (Date.now() - start < timeoutMs) {
-		try {
-			const controller = new AbortController();
-			const timeout = setTimeout(() => controller.abort(), 1_000);
-			const res = await fetch(`${baseUrl}/health`, { signal: controller.signal });
-			clearTimeout(timeout);
-			if (res.ok) return true;
-		} catch {
-			// Not ready yet.
-		}
-		await new Promise((r) => setTimeout(r, 200));
-	}
-	return false;
-}
+
 
 /**
  * Pick a webhook agent name to print in the friendly curl example. Falls back
