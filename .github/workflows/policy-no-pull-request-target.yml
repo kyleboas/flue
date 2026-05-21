@@ -1,0 +1,47 @@
+name: Policy - No forbidden PR target trigger
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - '.github/workflows/**'
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  no-pull-request-target:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Reject forbidden PR target workflows
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import sys
+
+          needle = 'pull_request' + '_target'
+          offenders = []
+          for path in sorted(Path('.github/workflows').glob('*')):
+              if path.is_file() and needle in path.read_text(encoding='utf-8', errors='ignore'):
+                  offenders.append(str(path))
+
+          if offenders:
+              print('Forbidden GitHub Actions trigger found: ' + needle)
+              for offender in offenders:
+                  print(f'- {offender}')
+              sys.exit(1)
+
+          print('OK: no forbidden trigger found.')
+          PY
