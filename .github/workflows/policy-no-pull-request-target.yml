@@ -2,14 +2,10 @@ name: Policy - No forbidden PR target trigger
 
 on:
   pull_request:
-    paths:
-      - '.github/workflows/**'
   push:
     branches:
       - main
       - master
-    paths:
-      - '.github/workflows/**'
   schedule:
     - cron: '17 3 * * *'
   workflow_dispatch:
