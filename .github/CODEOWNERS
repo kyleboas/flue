@@ -1,0 +1,3 @@
+# Protect GitHub Actions policy and automation changes.
+/.github/workflows/ @kyleboas
+/.github/CODEOWNERS @kyleboas
